@@ -51,13 +51,21 @@ class OpenAIService {
       return content.split('\n').filter(task => task.trim().length > 0).slice(0, 7);
     } catch (error) {
       console.error('OpenAI API error:', error);
-      if (error instanceof Error && error.message.includes('429')) {
-        throw new Error('OpenAI API quota exceeded. Please check your billing and usage limits at https://platform.openai.com/account/billing');
+      
+      // Handle specific OpenAI API errors
+      if (error instanceof Error) {
+        if (error.message.includes('429') || error.message.includes('quota exceeded')) {
+          throw new Error('QUOTA_EXCEEDED');
+        }
+        if (error.message.includes('401') || error.message.includes('Incorrect API key')) {
+          throw new Error('INVALID_API_KEY');
+        }
+        if (error.message.includes('insufficient_quota')) {
+          throw new Error('QUOTA_EXCEEDED');
+        }
       }
-      if (error instanceof Error && error.message.includes('401')) {
-        throw new Error('Invalid OpenAI API key. Please check your API key at https://platform.openai.com/api-keys');
-      }
-      throw new Error(`OpenAI API error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      
+      throw new Error('API_ERROR');
     }
   }
 
@@ -86,13 +94,21 @@ class OpenAIService {
       return response.choices[0]?.message?.content || currentDescription;
     } catch (error) {
       console.error('OpenAI API error:', error);
-      if (error instanceof Error && error.message.includes('429')) {
-        throw new Error('OpenAI API quota exceeded. Please check your billing and usage limits at https://platform.openai.com/account/billing');
+      
+      // Handle specific OpenAI API errors
+      if (error instanceof Error) {
+        if (error.message.includes('429') || error.message.includes('quota exceeded')) {
+          throw new Error('QUOTA_EXCEEDED');
+        }
+        if (error.message.includes('401') || error.message.includes('Incorrect API key')) {
+          throw new Error('INVALID_API_KEY');
+        }
+        if (error.message.includes('insufficient_quota')) {
+          throw new Error('QUOTA_EXCEEDED');
+        }
       }
-      if (error instanceof Error && error.message.includes('401')) {
-        throw new Error('Invalid OpenAI API key. Please check your API key at https://platform.openai.com/api-keys');
-      }
-      throw new Error(`OpenAI API error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      
+      throw new Error('API_ERROR');
     }
   }
 
@@ -122,13 +138,21 @@ class OpenAIService {
       return content.split('\n').filter(idea => idea.trim().length > 0).slice(0, 5);
     } catch (error) {
       console.error('OpenAI API error:', error);
-      if (error instanceof Error && error.message.includes('429')) {
-        throw new Error('OpenAI API quota exceeded. Please check your billing and usage limits at https://platform.openai.com/account/billing');
+      
+      // Handle specific OpenAI API errors
+      if (error instanceof Error) {
+        if (error.message.includes('429') || error.message.includes('quota exceeded')) {
+          throw new Error('QUOTA_EXCEEDED');
+        }
+        if (error.message.includes('401') || error.message.includes('Incorrect API key')) {
+          throw new Error('INVALID_API_KEY');
+        }
+        if (error.message.includes('insufficient_quota')) {
+          throw new Error('QUOTA_EXCEEDED');
+        }
       }
-      if (error instanceof Error && error.message.includes('401')) {
-        throw new Error('Invalid OpenAI API key. Please check your API key at https://platform.openai.com/api-keys');
-      }
-      throw new Error(`OpenAI API error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      
+      throw new Error('API_ERROR');
     }
   }
 }

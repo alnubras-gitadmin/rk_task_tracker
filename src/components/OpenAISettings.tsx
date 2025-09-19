@@ -37,11 +37,33 @@ const OpenAISettings: React.FC<OpenAISettingsProps> = ({ onApiKeySet }) => {
     if (!isConfigured) return;
 
     setIsTestingConnection(true);
+    setTestResult(null);
+    
     try {
       await openAIService.generateTaskSuggestions('Test Project', 'This is a test project to verify API connectivity');
       setTestResult({ success: true, message: 'Connection successful! OpenAI API is working.' });
     } catch (error) {
-      setTestResult({ success: false, message: `Connection failed: ${error instanceof Error ? error.message : 'Unknown error'}` });
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      
+      if (errorMessage === 'QUOTA_EXCEEDED') {
+        setTestResult({ 
+          success: false, 
+          message: 'OpenAI API quota exceeded. Please check your billing and usage limits.',
+          errorType: 'quota'
+        });
+      } else if (errorMessage === 'INVALID_API_KEY') {
+        setTestResult({ 
+          success: false, 
+          message: 'Invalid OpenAI API key. Please check your API key.',
+          errorType: 'auth'
+        });
+      } else {
+        setTestResult({ 
+          success: false, 
+          message: `Connection failed: ${errorMessage}`,
+          errorType: 'general'
+        });
+      }
     } finally {
       setIsTestingConnection(false);
     }
@@ -148,13 +170,24 @@ const OpenAISettings: React.FC<OpenAISettingsProps> = ({ onApiKeySet }) => {
           {testResult.success ? <CheckCircle size={16} /> : <AlertCircle size={16} />}
           <div className="text-sm">
             <p>{testResult.message}</p>
-            {!testResult.success && testResult.message.includes('quota exceeded') && (
+            {!testResult.success && (testResult as any).errorType === 'quota' && (
               <div className="mt-2 text-xs">
-                <p>To resolve this issue:</p>
+                <p className="font-medium mb-1">To resolve this quota issue:</p>
                 <ul className="list-disc list-inside mt-1 space-y-1">
                   <li>Visit <a href="https://platform.openai.com/account/billing" target="_blank" rel="noopener noreferrer" className="underline">OpenAI Billing</a> to check your usage</li>
                   <li>Add payment method or upgrade your plan if needed</li>
                   <li>Wait for quota reset if on free tier</li>
+                  <li>Consider using a different API key if available</li>
+                </ul>
+              </div>
+            )}
+            {!testResult.success && (testResult as any).errorType === 'auth' && (
+              <div className="mt-2 text-xs">
+                <p className="font-medium mb-1">To resolve this authentication issue:</p>
+                <ul className="list-disc list-inside mt-1 space-y-1">
+                  <li>Get a new API key from <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener noreferrer" className="underline">OpenAI Platform</a></li>
+                  <li>Make sure the API key starts with "sk-"</li>
+                  <li>Verify the key has proper permissions</li>
                 </ul>
               </div>
             )}
