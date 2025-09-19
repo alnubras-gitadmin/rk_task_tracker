@@ -52,16 +52,26 @@ class OpenAIService {
     } catch (error) {
       console.error('OpenAI API error:', error);
       
-      // Handle specific OpenAI API errors
-      if (error instanceof Error) {
-        if (error.message.includes('429') || error.message.includes('quota exceeded')) {
+      // Handle specific OpenAI API errors with better detection
+      if (error instanceof Error || (error && typeof error === 'object')) {
+        const errorMessage = error.message || String(error);
+        const errorString = errorMessage.toLowerCase();
+        
+        // Check for quota/billing related errors
+        if (errorString.includes('429') || 
+            errorString.includes('quota exceeded') || 
+            errorString.includes('insufficient_quota') ||
+            errorString.includes('billing') ||
+            errorString.includes('usage limit')) {
           throw new Error('QUOTA_EXCEEDED');
         }
-        if (error.message.includes('401') || error.message.includes('Incorrect API key')) {
+        
+        // Check for authentication errors
+        if (errorString.includes('401') || 
+            errorString.includes('incorrect api key') ||
+            errorString.includes('invalid api key') ||
+            errorString.includes('unauthorized')) {
           throw new Error('INVALID_API_KEY');
-        }
-        if (error.message.includes('insufficient_quota')) {
-          throw new Error('QUOTA_EXCEEDED');
         }
       }
       
@@ -95,16 +105,26 @@ class OpenAIService {
     } catch (error) {
       console.error('OpenAI API error:', error);
       
-      // Handle specific OpenAI API errors
-      if (error instanceof Error) {
-        if (error.message.includes('429') || error.message.includes('quota exceeded')) {
+      // Handle specific OpenAI API errors with better detection
+      if (error instanceof Error || (error && typeof error === 'object')) {
+        const errorMessage = error.message || String(error);
+        const errorString = errorMessage.toLowerCase();
+        
+        // Check for quota/billing related errors
+        if (errorString.includes('429') || 
+            errorString.includes('quota exceeded') || 
+            errorString.includes('insufficient_quota') ||
+            errorString.includes('billing') ||
+            errorString.includes('usage limit')) {
           throw new Error('QUOTA_EXCEEDED');
         }
-        if (error.message.includes('401') || error.message.includes('Incorrect API key')) {
+        
+        // Check for authentication errors
+        if (errorString.includes('401') || 
+            errorString.includes('incorrect api key') ||
+            errorString.includes('invalid api key') ||
+            errorString.includes('unauthorized')) {
           throw new Error('INVALID_API_KEY');
-        }
-        if (error.message.includes('insufficient_quota')) {
-          throw new Error('QUOTA_EXCEEDED');
         }
       }
       
@@ -139,16 +159,26 @@ class OpenAIService {
     } catch (error) {
       console.error('OpenAI API error:', error);
       
-      // Handle specific OpenAI API errors
-      if (error instanceof Error) {
-        if (error.message.includes('429') || error.message.includes('quota exceeded')) {
+      // Handle specific OpenAI API errors with better detection
+      if (error instanceof Error || (error && typeof error === 'object')) {
+        const errorMessage = error.message || String(error);
+        const errorString = errorMessage.toLowerCase();
+        
+        // Check for quota/billing related errors
+        if (errorString.includes('429') || 
+            errorString.includes('quota exceeded') || 
+            errorString.includes('insufficient_quota') ||
+            errorString.includes('billing') ||
+            errorString.includes('usage limit')) {
           throw new Error('QUOTA_EXCEEDED');
         }
-        if (error.message.includes('401') || error.message.includes('Incorrect API key')) {
+        
+        // Check for authentication errors
+        if (errorString.includes('401') || 
+            errorString.includes('incorrect api key') ||
+            errorString.includes('invalid api key') ||
+            errorString.includes('unauthorized')) {
           throw new Error('INVALID_API_KEY');
-        }
-        if (error.message.includes('insufficient_quota')) {
-          throw new Error('QUOTA_EXCEEDED');
         }
       }
       

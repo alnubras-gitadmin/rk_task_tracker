@@ -48,7 +48,7 @@ const OpenAISettings: React.FC<OpenAISettingsProps> = ({ onApiKeySet }) => {
       if (errorMessage === 'QUOTA_EXCEEDED') {
         setTestResult({ 
           success: false, 
-          message: 'OpenAI API quota exceeded. Please check your billing and usage limits.',
+          message: 'OpenAI API quota exceeded. This is not an application error - your API key has reached its usage limits.',
           errorType: 'quota'
         });
       } else if (errorMessage === 'INVALID_API_KEY') {
@@ -173,11 +173,12 @@ const OpenAISettings: React.FC<OpenAISettingsProps> = ({ onApiKeySet }) => {
             {!testResult.success && (testResult as any).errorType === 'quota' && (
               <div className="mt-2 text-xs">
                 <p className="font-medium mb-1">To resolve this quota issue:</p>
-                <ul className="list-disc list-inside mt-1 space-y-1">
-                  <li>Visit <a href="https://platform.openai.com/account/billing" target="_blank" rel="noopener noreferrer" className="underline">OpenAI Billing</a> to check your usage</li>
-                  <li>Add payment method or upgrade your plan if needed</li>
-                  <li>Wait for quota reset if on free tier</li>
-                  <li>Consider using a different API key if available</li>
+                <ul className="list-disc list-inside mt-1 space-y-1 text-xs">
+                  <li>Check your <a href="https://platform.openai.com/account/usage" target="_blank" rel="noopener noreferrer" className="underline font-medium">OpenAI Usage Dashboard</a></li>
+                  <li>Visit <a href="https://platform.openai.com/account/billing" target="_blank" rel="noopener noreferrer" className="underline font-medium">OpenAI Billing</a> to add payment method</li>
+                  <li>If on free tier: Wait for monthly quota reset or upgrade to paid plan</li>
+                  <li>Consider using a different API key with available quota</li>
+                  <li><strong>Note:</strong> This is a billing limitation, not an application bug</li>
                 </ul>
               </div>
             )}
