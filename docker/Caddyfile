@@ -1,1 +1,20 @@
+{
+  servers { metrics }
+}
+
+{$APP_DOMAIN} {
+  root * /usr/share/caddy
+  encode zstd gzip
+  try_files {path} /index.html
+
+  header {
+    Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+    X-Content-Type-Options "nosniff"
+    X-Frame-Options "DENY"
+    Referrer-Policy "strict-origin-when-cross-origin"
+    Content-Security-Policy "default-src 'self' 'unsafe-inline' 'unsafe-eval' data: blob: https:;"
+  }
+
+  file_server
+}
 
