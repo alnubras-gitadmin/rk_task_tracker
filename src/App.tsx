@@ -1,8 +1,12 @@
 import React, { useState } from 'react';
 import { Settings, Plus, CheckCircle, Clock, AlertCircle, Sparkles } from 'lucide-react';
+import { supabase, type Profile, type Project as DBProject } from './lib/supabase';
+import { n8nService } from './services/n8n';
+import AuthForm from './components/AuthForm';
 import OpenAISettings from './components/OpenAISettings';
 import AITaskGenerator from './components/AITaskGenerator';
 import { openAIService } from './services/openai';
+import type { User as SupabaseUser } from '@supabase/supabase-js';
 
 interface Task {
   id: string;
@@ -21,6 +25,9 @@ interface Project {
 }
 
 const App: React.FC = () => {
+  const [user, setUser] = useState<SupabaseUser | null>(null);
+  const [profile, setProfile] = useState<Profile | null>(null);
+  const [loading, setLoading] = useState(true);
   const [projects, setProjects] = useState<Project[]>([]);
   const [activeTab, setActiveTab] = useState<'projects' | 'settings'>('projects');
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
@@ -30,21 +37,143 @@ const App: React.FC = () => {
   const [newProject, setNewProject] = useState({ title: '', description: '' });
   const [newTask, setNewTask] = useState({ title: '', description: '' });
 
+  // Initialize auth state
+  useEffect(() => {
+    // Get initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+      if (session?.user) {
+        loadUserProfile(session.user.id);
+      }
+      setLoading(false);
+    });
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      setUser(session?.user ?? null);
+      if (session?.user) {
+        await loadUserProfile(session.user.id);
+        await loadUserProjects();
+      } else {
+        setProfile(null);
+        setProjects([]);
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const loadUserProfile = async (userId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('user_id', userId)
+        .single();
+
+      if (error && error.code !== 'PGRST116') {
+        console.error('Error loading profile:', error);
+        return;
+      }
+
+      if (data) {
+        setProfile(data);
+      }
+    } catch (error) {
+      console.error('Error loading profile:', error);
+    }
+  };
+
+  const loadUserProjects = async () => {
+    if (!user) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('threads')
+        .select('*')
+        .eq('created_by', user.id)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Error loading projects:', error);
+        return;
+      }
+
+      // Convert database projects to app format
+      const appProjects: Project[] = data.map(dbProject => ({
+        id: dbProject.id.toString(),
+        title: dbProject.title || 'Untitled Project',
+        description: dbProject.metadata?.description || '',
+        tasks: [], // Tasks will be loaded separately
+        createdAt: new Date(dbProject.created_at)
+      }));
+
+      setProjects(appProjects);
+    } catch (error) {
+      console.error('Error loading projects:', error);
+    }
+  };
+
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
+  };
+
   const createProject = () => {
     if (!newProject.title.trim()) return;
 
-    const project: Project = {
-      id: Date.now().toString(),
-      title: newProject.title,
-      description: newProject.description,
-      tasks: [],
-      createdAt: new Date()
-    };
-
-    setProjects([...projects, project]);
-    setNewProject({ title: '', description: '' });
-    setShowNewProjectForm(false);
+    createProjectInDatabase();
   };
+
+  const createProjectInDatabase = async () => {
+    if (!user || !newProject.title.trim()) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('threads')
+        .insert([
+          {
+            title: newProject.title,
+            metadata: { description: newProject.description },
+            created_by: user.id
+          }
+        ])
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error creating project:', error);
+        return;
+      }
+
+      const project: Project = {
+        id: data.id.toString(),
+        title: data.title || 'Untitled Project',
+        description: data.metadata?.description || '',
+        tasks: [],
+        createdAt: new Date(data.created_at)
+      };
+
+      setProjects([project, ...projects]);
+      setNewProject({ title: '', description: '' });
+      setShowNewProjectForm(false);
+
+      // Trigger N8N workflow
+      try {
+        await n8nService.triggerProjectCreation({
+          projectId: data.id,
+          title: project.title,
+          description: project.description,
+          createdBy: user.id,
+          teamMembers: []
+        });
+      } catch (n8nError) {
+        console.error('N8N project creation webhook failed:', n8nError);
+      }
+    } catch (error) {
+      console.error('Error creating project:', error);
+    }
+  };
+
 
   const addTask = (projectId: string) => {
     if (!newTask.title.trim()) return;
@@ -63,9 +192,25 @@ const App: React.FC = () => {
         : p
     ));
     setNewTask({ title: '', description: '' });
+
+    // Trigger N8N workflow
+    if (user) {
+      n8nService.triggerTaskCreation({
+        projectId: parseInt(projectId),
+        title: task.title,
+        description: task.description,
+        userId: user.id
+      }).catch(error => {
+        console.error('N8N task creation webhook failed:', error);
+      });
+    }
   };
 
   const updateTaskStatus = (projectId: string, taskId: string, status: Task['status']) => {
+    const oldTask = projects
+      .find(p => p.id === projectId)
+      ?.tasks.find(t => t.id === taskId);
+
     setProjects(projects.map(p => 
       p.id === projectId 
         ? { 
@@ -76,6 +221,19 @@ const App: React.FC = () => {
           }
         : p
     ));
+
+    // Trigger N8N workflow
+    if (user && oldTask) {
+      n8nService.triggerTaskStatusChange({
+        taskId: parseInt(taskId),
+        projectId: parseInt(projectId),
+        oldStatus: oldTask.status,
+        newStatus: status,
+        userId: user.id
+      }).catch(error => {
+        console.error('N8N task status webhook failed:', error);
+      });
+    }
   };
 
   const handleAITasksGenerated = (tasks: string[]) => {
@@ -95,6 +253,19 @@ const App: React.FC = () => {
         : p
     ));
     setShowAIGenerator(false);
+
+    // Trigger N8N workflow
+    if (user) {
+      n8nService.triggerAITaskGeneration({
+        projectId: parseInt(selectedProject.id),
+        projectTitle: selectedProject.title,
+        projectDescription: selectedProject.description,
+        userId: user.id,
+        generatedTasks: tasks
+      }).catch(error => {
+        console.error('N8N AI task generation webhook failed:', error);
+      });
+    }
   };
 
   const getStatusIcon = (status: Task['status']) => {
@@ -113,6 +284,23 @@ const App: React.FC = () => {
     }
   };
 
+  // Show loading screen
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show auth form if not authenticated
+  if (!user) {
+    return <AuthForm onAuthSuccess={() => loadUserProjects()} />;
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -128,6 +316,19 @@ const App: React.FC = () => {
                 <p className="text-sm text-gray-500">AI-Powered Project Management</p>
               </div>
             </div>
+            <div className="flex items-center gap-4">
+              {profile && (
+                <div className="flex items-center gap-2 text-sm text-gray-600">
+                  <User size={16} />
+                  <span>{profile.full_name || user.email}</span>
+                </div>
+              )}
+              <button
+                onClick={handleSignOut}
+                className="flex items-center gap-2 px-3 py-2 text-gray-600 hover:text-gray-900 rounded-lg hover:bg-gray-100 transition-colors"
+              >
+                <LogOut size={16} />
+              </button>
             <nav className="flex space-x-4">
               <button
                 onClick={() => setActiveTab('projects')}
@@ -150,6 +351,7 @@ const App: React.FC = () => {
                 Integrations
               </button>
             </nav>
+            </div>
           </div>
         </div>
       </header>
