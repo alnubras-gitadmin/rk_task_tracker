@@ -43,12 +43,13 @@ const OpenAISettings: React.FC<OpenAISettingsProps> = ({ onApiKeySet }) => {
       await openAIService.generateTaskSuggestions('Test Project', 'This is a test project to verify API connectivity');
       setTestResult({ success: true, message: 'Connection successful! OpenAI API is working.' });
     } catch (error) {
+      console.info('OpenAI API quota check:', error); // Log as info, not error
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       
       if (errorMessage === 'QUOTA_EXCEEDED') {
         setTestResult({ 
           success: false, 
-          message: 'OpenAI API quota exceeded. This is not an application error - your API key has reached its usage limits.',
+          message: 'Your OpenAI API key has reached its usage quota. This is expected behavior when limits are exceeded.',
           errorType: 'quota'
         });
       } else if (errorMessage === 'INVALID_API_KEY') {
@@ -165,20 +166,20 @@ const OpenAISettings: React.FC<OpenAISettingsProps> = ({ onApiKeySet }) => {
 
       {testResult && (
         <div className={`mt-4 p-3 rounded-lg flex items-start gap-2 ${
-          testResult.success ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-700'
+          testResult.success ? 'bg-emerald-50 text-emerald-700' : 
+          (testResult as any).errorType === 'quota' ? 'bg-amber-50 text-amber-700' : 'bg-red-50 text-red-700'
         }`}>
           {testResult.success ? <CheckCircle size={16} /> : <AlertCircle size={16} />}
           <div className="text-sm">
             <p>{testResult.message}</p>
             {!testResult.success && (testResult as any).errorType === 'quota' && (
               <div className="mt-2 text-xs">
-                <p className="font-medium mb-1">To resolve this quota issue:</p>
+                <p className="font-medium mb-1">✅ Your API key is valid. To increase quota:</p>
                 <ul className="list-disc list-inside mt-1 space-y-1 text-xs">
                   <li>Check your <a href="https://platform.openai.com/account/usage" target="_blank" rel="noopener noreferrer" className="underline font-medium">OpenAI Usage Dashboard</a></li>
                   <li>Visit <a href="https://platform.openai.com/account/billing" target="_blank" rel="noopener noreferrer" className="underline font-medium">OpenAI Billing</a> to add payment method</li>
                   <li>If on free tier: Wait for monthly quota reset or upgrade to paid plan</li>
-                  <li>Consider using a different API key with available quota</li>
-                  <li><strong>Note:</strong> This is a billing limitation, not an application bug</li>
+                  <li><strong>Note:</strong> AI features will work once quota is available</li>
                 </ul>
               </div>
             )}
