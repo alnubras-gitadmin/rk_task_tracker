@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Settings, Plus, CheckCircle, Clock, AlertCircle, Sparkles } from 'lucide-react';
 import { supabase, type Profile, type Project as DBProject } from './lib/supabase';
 import { n8nService } from './services/n8n';
