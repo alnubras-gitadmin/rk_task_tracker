@@ -61,7 +61,22 @@ const AuthForm: React.FC<AuthFormProps> = ({ onAuthSuccess }) => {
       
       onAuthSuccess?.()
     } catch (error: any) {
-      setError(error.message)
+      // Provide more specific error messages based on the error and context
+      if (error.message === 'Invalid login credentials') {
+        if (isSignUp) {
+          setError('Unable to create account. Please check your email format and ensure your password is at least 6 characters long, or try a different email address.')
+        } else {
+          setError('Invalid email or password. Please double-check your credentials or sign up if you don\'t have an account yet.')
+        }
+      } else if (error.message.includes('User already registered')) {
+        setError('An account with this email already exists. Please sign in instead or use a different email address.')
+      } else if (error.message.includes('Password should be at least')) {
+        setError('Password must be at least 6 characters long. Please choose a stronger password.')
+      } else if (error.message.includes('Invalid email')) {
+        setError('Please enter a valid email address.')
+      } else {
+        setError(error.message)
+      }
     } finally {
       setLoading(false)
     }
