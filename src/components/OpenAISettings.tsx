@@ -10,7 +10,7 @@ const OpenAISettings: React.FC<OpenAISettingsProps> = ({ onApiKeySet }) => {
   const [apiKey, setApiKey] = useState('');
   const [isConfigured, setIsConfigured] = useState(false);
   const [isTestingConnection, setIsTestingConnection] = useState(false);
-  const [testResult, setTestResult] = useState<{ success: boolean; message: string } | null>(null);
+  const [testResult, setTestResult] = useState<{ success: boolean; message: string; errorType?: string } | null>(null);
   const [showApiKey, setShowApiKey] = useState(false);
 
   useEffect(() => {

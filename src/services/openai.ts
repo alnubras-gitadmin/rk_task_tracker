@@ -54,7 +54,7 @@ class OpenAIService {
       
       // Handle specific OpenAI API errors with better detection
       if (error instanceof Error || (error && typeof error === 'object')) {
-        const errorMessage = error.message || String(error);
+        const errorMessage = error instanceof Error ? error.message : String(error);
         const errorString = errorMessage.toLowerCase();
         
         // Check for quota/billing related errors
@@ -107,7 +107,7 @@ class OpenAIService {
       
       // Handle specific OpenAI API errors with better detection
       if (error instanceof Error || (error && typeof error === 'object')) {
-        const errorMessage = error.message || String(error);
+        const errorMessage = error instanceof Error ? error.message : String(error);
         const errorString = errorMessage.toLowerCase();
         
         // Check for quota/billing related errors
@@ -161,7 +161,7 @@ class OpenAIService {
       
       // Handle specific OpenAI API errors with better detection
       if (error instanceof Error || (error && typeof error === 'object')) {
-        const errorMessage = error.message || String(error);
+        const errorMessage = error instanceof Error ? error.message : String(error);
         const errorString = errorMessage.toLowerCase();
         
         // Check for quota/billing related errors

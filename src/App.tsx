@@ -1,11 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Settings, Plus, CheckCircle, Clock, AlertCircle, Sparkles } from 'lucide-react';
-import { supabase, type Profile, type Project as DBProject } from './lib/supabase';
+import { Settings, Plus, CheckCircle, Clock, AlertCircle, Sparkles, User, LogOut } from 'lucide-react';
+import { supabase, type Profile } from './lib/supabase';
 import { n8nService } from './services/n8n';
 import AuthForm from './components/AuthForm';
 import OpenAISettings from './components/OpenAISettings';
 import AITaskGenerator from './components/AITaskGenerator';
-import { openAIService } from './services/openai';
 import type { User as SupabaseUser } from '@supabase/supabase-js';
 
 interface Task {
@@ -49,7 +48,7 @@ const App: React.FC = () => {
     });
 
     // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
       setUser(session?.user ?? null);
       if (session?.user) {
         await loadUserProfile(session.user.id);

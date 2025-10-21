@@ -1,0 +1,42 @@
+{
+  "expo": {
+    "name": "RK TaskBook",
+    "slug": "rk-taskbook",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "automatic",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.alnubras.rktaskbook",
+      "buildNumber": "1"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#ffffff"
+      },
+      "package": "com.alnubras.rktaskbook",
+      "versionCode": 1
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "your-project-id-here"
+      },
+      "EXPO_PUBLIC_SUPABASE_URL": "https://aigcaipomzrtwmywckqm.supabase.co",
+      "EXPO_PUBLIC_SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFpZ2NhaXBvbXpydHdteXdja3FtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc4NDgxNzYsImV4cCI6MjA3MzQyNDE3Nn0.AmcXDceBwVFm78faZRqGPmjfbr_LH_5ILZfkr5zn6r4",
+      "EXPO_PUBLIC_N8N_WEBHOOK_URL": "https://n8n.rktaskbook.alnubras.co/webhook/"
+    }
+  }
+}
